@@ -12,12 +12,12 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
-func run(dir string, opts internal.GenerateVersionOptions) (*string, error) {
+func run(dir, tagPrefix string, opts internal.GenerateVersionOptions) (*string, error) {
 	repo, err := internal.OpenRepository(dir)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open git repository: %v", err)
 	}
-	tagName, counter, headHash, err := internal.GitDescribe(*repo)
+	tagName, counter, headHash, err := internal.GitDescribe(tagPrefix, *repo)
 	if err != nil {
 		return nil, fmt.Errorf("unable to describe commit: %v", err)
 	}
@@ -37,6 +37,7 @@ func openStdoutOrFile(file string) (io.WriteCloser, error) {
 
 type ParserOptions struct {
 	Dir                   string `long:"dir" default:"." description:"The git worktree directory"`
+	TagPrefix             string `long:"prefix" default:"" description:"Optional prefix of the tags"`
 	Fallback              string `long:"fallback" description:"The first version to fallback to should there be no tag"`
 	DropPrefix            bool   `long:"drop-prefix" description:"Drop prefix from output"`
 	PrereleaseSuffix      string `long:"prerelease-suffix" description:"Suffix to add to prereleases"`
@@ -71,7 +72,7 @@ func Execute(version FullVersion) error {
 		NextRelease:           options.NextRelease,
 		Format:                options.Format,
 	}
-	result, err := run(options.Dir, opts)
+	result, err := run(options.Dir, options.TagPrefix, opts)
 	if err != nil {
 		return err
 	}

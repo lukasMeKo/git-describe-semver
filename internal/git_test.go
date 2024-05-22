@@ -20,12 +20,12 @@ func TestGitTagMap(t *testing.T) {
 	repo, _ := git.PlainInit(dir, false)
 	worktree, _ := repo.Worktree()
 
-	tags, _ := GitTagMap(*repo)
+	tags, _ := GitTagMap("", *repo)
 	assert.Equal(map[string]string{}, *tags)
 
 	commit1, _ := worktree.Commit("first", &git.CommitOptions{Author: &author})
 	tag1, _ := repo.CreateTag("v1.0.0", commit1, nil)
-	tags, _ = GitTagMap(*repo)
+	tags, _ = GitTagMap("", *repo)
 	assert.Equal(commit1.String(), tag1.Hash().String())
 	assert.Equal(map[string]string{
 		tag1.Hash().String(): "v1.0.0",
@@ -40,7 +40,7 @@ func TestGitTagMap(t *testing.T) {
 		Message: "Version 2.0.0",
 	})
 	assert.NotEqual(commit2.String(), tag2.Hash().String())
-	tags, _ = GitTagMap(*repo)
+	tags, _ = GitTagMap("", *repo)
 	assert.Equal(map[string]string{
 		commit1.String(): "v1.0.0",
 		commit2.String(): "v2.0.0",
@@ -55,7 +55,7 @@ func TestGitTagMap(t *testing.T) {
 		Message: "Not a semver version tag",
 	})
 	assert.NotEqual(commit3.String(), tag3.Hash().String())
-	tags, _ = GitTagMap(*repo)
+	tags, _ = GitTagMap("", *repo)
 	assert.Equal(map[string]string{
 		commit1.String(): "v1.0.0",
 		commit2.String(): "v2.0.0",
@@ -68,10 +68,10 @@ func TestGitDescribe(t *testing.T) {
 	author := object.Signature{Name: "Test", Email: "test@test.com"}
 	repo, _ := git.PlainInit(dir, false)
 	worktree, _ := repo.Worktree()
-	_, _, _, err := GitDescribe(*repo)
+	_, _, _, err := GitDescribe("", *repo)
 	assert.Error(err)
 	test := func(expectedTagName string, expectedCounter int, expectedHeadHash string) {
-		actualTagName, actualCounter, actualHeadHash, err := GitDescribe(*repo)
+		actualTagName, actualCounter, actualHeadHash, err := GitDescribe("", *repo)
 		assert.NoError(err)
 		assert.Equal(expectedTagName, *actualTagName)
 		assert.Equal(expectedCounter, *actualCounter)
@@ -100,10 +100,10 @@ func TestGitDescribeWithBranch(t *testing.T) {
 	author := object.Signature{Name: "Test", Email: "test@test.com"}
 	repo, _ := git.PlainInit(dir, false)
 	worktree, _ := repo.Worktree()
-	_, _, _, err := GitDescribe(*repo)
+	_, _, _, err := GitDescribe("", *repo)
 	assert.Error(err)
 	test := func(expectedTagName string, expectedCounter int, expectedHeadHash string) {
-		actualTagName, actualCounter, actualHeadHash, err := GitDescribe(*repo)
+		actualTagName, actualCounter, actualHeadHash, err := GitDescribe("", *repo)
 		assert.NoError(err)
 		assert.Equal(expectedTagName, *actualTagName)
 		assert.Equal(expectedCounter, *actualCounter)

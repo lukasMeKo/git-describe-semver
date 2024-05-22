@@ -21,7 +21,7 @@ const (
 )
 
 // GitTagMap ...
-func GitTagMap(repo git.Repository) (*map[string]string, error) {
+func GitTagMap(prefix string, repo git.Repository) (*map[string]string, error) {
 	iter, err := repo.Tags()
 	if err != nil {
 		return nil, err
@@ -29,18 +29,23 @@ func GitTagMap(repo git.Repository) (*map[string]string, error) {
 	tagMap := map[string]string{}
 	err = iter.ForEach(func(r *plumbing.Reference) error {
 		tag, _ := repo.TagObject(r.Hash())
-		if SemVerParse(r.Name().Short()) == nil {
+		tagName, found := strings.CutPrefix(r.Name().Short(), prefix)
+		if !found {
+			// Filter out tags that do not have the prefix
+			return nil
+		}
+		if SemVerParse(tagName) == nil {
 			// Filter out tags that are not semver
 			return nil
 		}
 		if tag == nil {
-			tagMap[r.Hash().String()] = r.Name().Short()
+			tagMap[r.Hash().String()] = tagName
 		} else {
 			c, err := tag.Commit()
 			if err != nil {
 				return err
 			}
-			tagMap[c.Hash.String()] = r.Name().Short()
+			tagMap[c.Hash.String()] = tagName
 		}
 		return nil
 	})
@@ -51,7 +56,7 @@ func GitTagMap(repo git.Repository) (*map[string]string, error) {
 }
 
 // GitDescribe ...
-func GitDescribe(repo git.Repository) (*string, *int, *string, error) {
+func GitDescribe(prefix string, repo git.Repository) (*string, *int, *string, error) {
 	type gitDescribeNode struct {
 		Commit   object.Commit
 		Distance int
@@ -62,7 +67,7 @@ func GitDescribe(repo git.Repository) (*string, *int, *string, error) {
 		return nil, nil, nil, fmt.Errorf("unable to find head: %v", err)
 	}
 	headHash := head.Hash().String()
-	tags, err := GitTagMap(repo)
+	tags, err := GitTagMap(prefix, repo)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to get tags: %v", err)
 	}
